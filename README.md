@@ -105,7 +105,7 @@ fn main() -> Result<(), Error> {
     assert!(value.is_none());
 
     // delete use key of type &[u8]
-    database.delete_u8(&write_ops, &&b"temp"[..])?;
+    database.delete_u8(&write_ops, &b"temp"[..])?;
     let value = database.get(&read_ops, &&b"key"[..])?;
     assert!(value.is_none());
 
