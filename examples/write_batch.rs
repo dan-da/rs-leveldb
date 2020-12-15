@@ -5,7 +5,7 @@ use leveldb::error::Error;
 use std::path::Path;
 
 fn main() -> Result<(), Error> {
-    let path = Path::new("temp_ldb");
+    let path = Path::new("temp_batch_ldb");
     let mut options = Options::new();
     options.create_if_missing = true;
 

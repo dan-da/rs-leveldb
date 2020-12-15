@@ -33,7 +33,7 @@ fn main() -> Result<(), Error> {
     assert_eq!(Vec::from(&b"5"[..]), value.unwrap());
 
     // key of String type
-    let key = "from".to_ascii_lowercase();
+    let key = "from".to_string();
     database.put(&write_ops, &key, &b"mars"[..])?;
 
     let value = database.get(&read_ops, &key)?;
@@ -61,7 +61,7 @@ fn main() -> Result<(), Error> {
     assert!(value.is_none());
 
     // delete use key of type &[u8]
-    database.delete_u8(&write_ops, &&b"temp"[..])?;
+    database.delete_u8(&write_ops, &b"temp"[..])?;
     let value = database.get(&read_ops, &&b"key"[..])?;
     assert!(value.is_none());
 
