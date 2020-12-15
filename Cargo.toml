@@ -1,37 +1,23 @@
 [package]
-
-name = "leveldb"
-version = "0.8.6"
-authors = [ "Florian Gilcher <florian.gilcher@asquera.de>" ]
-
-description = "An interface for leveldb"
-
+name = "rs-leveldb"
+version = "0.1.0"
+authors = ["liukaizeng <1051299241@qq.com>"]
+edition = "2018"
 license = "MIT"
 readme = "README.md"
+description = "Almost-complete bindings for leveldb for Rust."
 
-documentation = "http://skade.github.io/leveldb/"
-homepage = "https://github.com/skade/leveldb"
-repository = "https://github.com/skade/leveldb"
-
-autotests = false
-
-[features]
-default = ["leveldb-sys/snappy"]
 
 [lib]
-
 name = "leveldb"
+path = "src/lib.rs"
 
 [dependencies]
-
-db-key = "0.0.5"
 libc = "0.2.4"
-
-[dependencies.leveldb-sys]
-version = "2.0.0"
+leveldb-sys = "2.0.0"
 
 [dev-dependencies]
 tempdir = "0.3.4"
 
-[[test]]
-name = "tests"
+[features]
+default = ["leveldb-sys/snappy"]

@@ -1,47 +1,3 @@
-# Rust leveldb bindings
-
-Almost-complete bindings for leveldb for Rust.
-
-# Forked from and change 
-This repository forked from `https://github.com/skade/leveldb.git`.  
-
-## Prerequisites
-
-`snappy` and `leveldb` need to be installed. On Ubuntu, I recommend:
-
-```sh
-sudo apt-get install libleveldb-dev libsnappy-dev
-```
-
-## Usage
-
-If your project is using [Cargo](http://crates.io), drop the following lines in your `Cargo.toml`:
-
-```text
-[dependencies]
-
-rs-leveldb = "0.0.1"
-```
-
-## Development
-
-Make sure you have all prerequisites installed. Run
-
-```sh
-$ cargo build
-```
-
-for building and
-
-```sh
-$ cargo test
-```
-
-to run the test suite.
-
-## Examples
-
-```rust
 use leveldb::options::{Options, WriteOptions, ReadOptions};
 use leveldb::db::Database;
 use leveldb::error::Error;
@@ -129,13 +85,3 @@ fn main() -> Result<(), Error> {
 
     Ok(())
 }
-```
-
-## Open issues
-
-* Filter policies are missing
-* Iterators with arbirary start and end points are unsupported
-
-# License
-
-MIT, see `LICENSE`

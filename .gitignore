@@ -1,5 +1,3 @@
-build
-testdbs
-target
-*sw*
-Cargo.lock
+/target
+/Cargo.lock
+/temp_ldb/

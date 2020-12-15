@@ -1,9 +1,8 @@
 //! The module defining custom leveldb error type.
 
-use libc::c_void;
+use libc::{c_void, c_char};
 use leveldb_sys::leveldb_free;
 use std;
-use libc::c_char;
 
 /// A leveldb error, just containing the error string
 /// provided by leveldb.
@@ -42,7 +41,7 @@ impl std::error::Error for Error {
     fn description(&self) -> &str {
         &self.message
     }
-    fn cause(&self) -> Option<&std::error::Error> {
+    fn cause(&self) -> Option<&dyn std::error::Error> {
         None
     }
 }

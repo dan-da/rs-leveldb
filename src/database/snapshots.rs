@@ -5,15 +5,11 @@
 use leveldb_sys::{leveldb_t, leveldb_snapshot_t};
 use leveldb_sys::{leveldb_release_snapshot, leveldb_create_snapshot};
 
-use database::key::Key;
-use database::Database;
-use database::kv::KV;
-
-use database::error::Error;
-use database::options::ReadOptions;
-use database::iterator::{Iterable, Iterator, KeyIterator, ValueIterator};
-
-use std::borrow::Borrow;
+use super::db::Database;
+use super::error::Error;
+use super::options::ReadOptions;
+use super::key::IntoLevelDBKey;
+use super::iterator::{Iterable, Iterator, KeyIterator, ValueIterator};
 
 #[allow(missing_docs)]
 struct RawSnapshot {
@@ -31,45 +27,32 @@ impl Drop for RawSnapshot {
 ///
 /// Represents a database at a certain point in time,
 /// and allows for all read operations (get and iteration).
-pub struct Snapshot<'a, K: Key + 'a> {
+pub struct Snapshot<'a> {
     raw: RawSnapshot,
-    database: &'a Database<K>,
+    database: &'a Database,
 }
 
-/// Structs implementing the Snapshots trait can be
-/// snapshotted.
-pub trait Snapshots<K: Key> {
-    /// Creates a snapshot and returns a struct
-    /// representing it.
-    fn snapshot<'a>(&'a self) -> Snapshot<'a, K>;
-}
 
-impl<K: Key> Snapshots<K> for Database<K> {
-    fn snapshot<'a>(&'a self) -> Snapshot<'a, K> {
-        let db_ptr = self.database.ptr;
-        let snap = unsafe { leveldb_create_snapshot(db_ptr) };
-
-        let raw = RawSnapshot {
-            db_ptr: db_ptr,
-            ptr: snap,
-        };
-        Snapshot {
-            raw: raw,
-            database: self,
-        }
-    }
-}
-
-impl<'a, K: Key> Snapshot<'a, K> {
+impl<'a> Snapshot<'a> {
     /// fetches a key from the database
     ///
     /// Inserts this snapshot into ReadOptions before reading
-    pub fn get<BK: Borrow<K>>(&'a self,
-               mut options: ReadOptions<'a, K>,
-               key: BK)
+
+    pub fn get(&'a self,
+                  options: &mut ReadOptions<'a>,
+                  key: &dyn IntoLevelDBKey)
+                  -> Result<Option<Vec<u8>>, Error> {
+
+        options.snapshot = Some(self);
+        self.database.get(&options, key)
+    }
+
+    pub fn get_u8(&'a self,
+               options: &mut ReadOptions<'a>,
+               key: &[u8])
                -> Result<Option<Vec<u8>>, Error> {
         options.snapshot = Some(self);
-        self.database.get(options, key)
+        self.database.get_u8(&options, key)
     }
 
     #[inline]
@@ -79,17 +62,53 @@ impl<'a, K: Key> Snapshot<'a, K> {
     }
 }
 
-impl<'a, K: Key + 'a> Iterable<'a, K> for Snapshot<'a, K> {
-    fn iter(&'a self, mut options: ReadOptions<'a, K>) -> Iterator<K> {
-        options.snapshot = Some(self);
-        self.database.iter(options)
-    }
-    fn keys_iter(&'a self, mut options: ReadOptions<'a, K>) -> KeyIterator<K> {
-        options.snapshot = Some(self);
-        self.database.keys_iter(options)
-    }
-    fn value_iter(&'a self, mut options: ReadOptions<'a, K>) -> ValueIterator<K> {
-        options.snapshot = Some(self);
-        self.database.value_iter(options)
+/// Structs implementing the Snapshots trait can be
+/// snapshotted.
+pub trait Snapshots {
+    /// Creates a snapshot and returns a struct
+    /// representing it.
+    fn snapshot(&self) -> Snapshot;
+}
+
+impl Snapshots for Database {
+    fn snapshot(&self) -> Snapshot {
+        let db_str = self.database.ptr;
+        let snap = unsafe {
+            leveldb_create_snapshot(db_str)
+        };
+
+        let raw = RawSnapshot {
+            db_ptr: db_str,
+            ptr: snap,
+        };
+
+        Snapshot {
+            raw,
+            database: self
+        }
     }
 }
+
+impl<'a> Iterable<'a> for Snapshot<'a> {
+    fn iter(&'a self, options: &ReadOptions<'a>) -> Iterator<'a> {
+        let mut opts = options.clone();
+        opts.snapshot = Some(self);
+
+        self.database.iter(&opts)
+    }
+
+    fn keys_iter(&'a self, options: &ReadOptions<'a>) -> KeyIterator<'a> {
+        let mut opts = options.clone();
+        opts.snapshot = Some(self);
+
+        self.database.keys_iter(&opts)
+    }
+
+    fn value_iter(&'a self, options: &ReadOptions<'a>) -> ValueIterator<'a> {
+        let mut opts = options.clone();
+        opts.snapshot = Some(self);
+
+        self.database.value_iter(&opts)
+    }
+}
+

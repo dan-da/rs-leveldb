@@ -1,15 +1,9 @@
-//! All the option types needed for interfacing with leveldb.
-//!
-//! Those are:
-//! * `Options`: used when opening a database
-//! * `ReadOptions`: used when reading from leveldb
-//! * `WriteOptions`: used when writng to leveldb
 use leveldb_sys::*;
 
 use libc::size_t;
-use database::snapshots::Snapshot;
-use database::key::Key;
-use database::cache::Cache;
+
+use super::cache::Cache;
+use super::snapshots::Snapshot;
 
 /// Options to consider when opening a new or pre-existing database.
 ///
@@ -58,6 +52,20 @@ pub struct Options {
     pub cache: Option<Cache>,
 }
 
+impl std::fmt::Debug for Options {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("")
+         .field(&self.create_if_missing)
+            .field(&self.error_if_exists)
+            .field(&self.paranoid_checks)
+            .field(&self.write_buffer_size)
+            .field(&self.max_open_files)
+            .field(&self.block_size)
+            .field(&self.block_restart_interval)
+         .finish()
+    }
+}
+
 impl Options {
     /// Create a new `Options` struct with default settings.
     pub fn new() -> Options {
@@ -93,7 +101,8 @@ impl WriteOptions {
 
 /// The read options to use for any read operation.
 #[allow(missing_copy_implementations)]
-pub struct ReadOptions<'a, K: Key + 'a> {
+#[derive(Copy, Clone)]
+pub struct ReadOptions<'a>  {
     /// Whether to verify the saved checksums on read.
     ///
     /// default: false
@@ -109,12 +118,12 @@ pub struct ReadOptions<'a, K: Key + 'a> {
     /// this yourself.
     ///
     /// default: None
-    pub snapshot: Option<&'a Snapshot<'a, K>>,
+    pub snapshot: Option<&'a Snapshot<'a>>,
 }
 
-impl<'a, K: Key + 'a> ReadOptions<'a, K> {
+impl<'a> ReadOptions<'a> {
     /// Return a `ReadOptions` struct with the default values.
-    pub fn new() -> ReadOptions<'a, K> {
+    pub fn new() -> ReadOptions<'a> {
         ReadOptions {
             verify_checksums: false,
             fill_cache: true,
@@ -154,16 +163,14 @@ pub unsafe fn c_options(options: &Options,
 }
 
 #[allow(missing_docs)]
-pub unsafe fn c_writeoptions(options: WriteOptions) -> *mut leveldb_writeoptions_t {
+pub unsafe fn c_writeoptions(options: &WriteOptions) -> *mut leveldb_writeoptions_t {
     let c_writeoptions = leveldb_writeoptions_create();
     leveldb_writeoptions_set_sync(c_writeoptions, options.sync as u8);
     c_writeoptions
 }
 
 #[allow(missing_docs)]
-pub unsafe fn c_readoptions<'a, K>(options: &ReadOptions<'a, K>) -> *mut leveldb_readoptions_t
-    where K: Key
-{
+pub unsafe fn c_readoptions<'a>(options: &ReadOptions<'a>) -> *mut leveldb_readoptions_t {
     let c_readoptions = leveldb_readoptions_create();
     leveldb_readoptions_set_verify_checksums(c_readoptions, options.verify_checksums as u8);
     leveldb_readoptions_set_fill_cache(c_readoptions, options.fill_cache as u8);
