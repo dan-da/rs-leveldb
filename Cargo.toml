@@ -6,7 +6,10 @@ edition = "2018"
 license = "MIT"
 readme = "README.md"
 description = "Almost-complete bindings for leveldb for Rust."
+homepage = "https://github.com/fetchadd/leveldb"
+repository = "https://github.com/fetchadd/leveldb"
 
+keywords = ["leveldb"]
 
 [lib]
 name = "leveldb"
