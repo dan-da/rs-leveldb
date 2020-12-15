@@ -77,7 +77,7 @@ fn main() -> Result<(), Error> {
     assert_eq!(Vec::from(&b"5"[..]), value.unwrap());
 
     // key of String type
-    let key = "from".to_ascii_lowercase();
+    let key = "from".to_string();
     database.put(&write_ops, &key, &b"mars"[..])?;
 
     let value = database.get(&read_ops, &key)?;
