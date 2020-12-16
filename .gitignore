@@ -1,3 +1,4 @@
 /target
 /Cargo.lock
 /temp_ldb/
+/temp_batch_ldb/
