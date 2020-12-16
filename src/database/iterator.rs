@@ -9,6 +9,7 @@ use super::Database;
 use super::options::{ReadOptions, c_readoptions};
 use std::slice::from_raw_parts;
 use std::marker::PhantomData;
+use crate::database::snapshots::Snapshot;
 
 #[allow(missing_docs)]
 struct RawIterator {
@@ -76,24 +77,24 @@ pub struct RevValueIterator<'a> {
 /// A trait to allow access to the three main iteration styles of leveldb.
 pub trait Iterable<'a> {
     /// Return an Iterator iterating over (Key,Value) pairs
-    fn iter(&'a self, options: &ReadOptions<'a>) -> Iterator<'a>;
+    fn iter(&'a self, options: &ReadOptions) -> Iterator<'a>;
     /// Returns an Iterator iterating over Keys only.
-    fn keys_iter(&'a self, options: &ReadOptions<'a>) -> KeyIterator<'a>;
+    fn keys_iter(&'a self, options: &ReadOptions) -> KeyIterator<'a>;
     /// Returns an Iterator iterating over Values only.
-    fn value_iter(&'a self, options: &ReadOptions<'a>) -> ValueIterator<'a>;
+    fn value_iter(&'a self, options: &ReadOptions) -> ValueIterator<'a>;
 }
 
 impl<'a> Iterable<'a> for Database {
-    fn iter(&'a self, options: &ReadOptions<'a>) -> Iterator<'a> {
-        Iterator::new(self, options)
+    fn iter(&'a self, options: &ReadOptions) -> Iterator<'a> {
+        Iterator::new(self, options, None)
     }
 
-    fn keys_iter(&'a self, options: &ReadOptions<'a>) -> KeyIterator<'a> {
-        KeyIterator::new(self, options)
+    fn keys_iter(&'a self, options: &ReadOptions) -> KeyIterator<'a> {
+        KeyIterator::new(self, options, None)
     }
 
-    fn value_iter(&'a self, options: &ReadOptions<'a>) -> ValueIterator<'a> {
-        ValueIterator::new(self, options)
+    fn value_iter(&'a self, options: &ReadOptions) -> ValueIterator<'a> {
+        ValueIterator::new(self, options, None)
     }
 }
 
@@ -155,9 +156,14 @@ pub trait LevelDBIterator<'a> {
 }
 
 impl<'a> Iterator<'a> {
-    pub fn new(database: &'a Database, options: &ReadOptions<'a>) -> Iterator<'a> {
+    pub fn new(database: &'a Database, options: &ReadOptions, snapshot: Option<&'a Snapshot>) -> Iterator<'a> {
         unsafe {
             let c_read_options = c_readoptions(options);
+
+            if let Some(snapshot) = snapshot {
+                leveldb_readoptions_set_snapshot(c_read_options, snapshot.raw_ptr());
+            }
+
             let ptr = leveldb_create_iterator(database.database.ptr, c_read_options);
 
             leveldb_readoptions_destroy(c_read_options);
@@ -219,8 +225,8 @@ impl<'a> LevelDBIterator<'a> for RevIterator<'a> {
 }
 
 impl<'a> KeyIterator<'a> {
-    pub fn new(database: &'a Database, options: &ReadOptions<'a>) -> KeyIterator<'a> {
-        KeyIterator { inner: Iterator::new(database, options) }
+    pub fn new(database: &'a Database, options: &ReadOptions, snapshot: Option<&'a Snapshot>) -> KeyIterator<'a> {
+        KeyIterator { inner: Iterator::new(database, options, snapshot) }
     }
 
     /// return the last element of the iterator
@@ -231,8 +237,8 @@ impl<'a> KeyIterator<'a> {
 }
 
 impl<'a> ValueIterator<'a> {
-    pub fn new(database: &'a Database, options: &ReadOptions<'a>) -> ValueIterator<'a> {
-        ValueIterator { inner: Iterator::new(database, options) }
+    pub fn new(database: &'a Database, options: &ReadOptions, snapshot: Option<&'a Snapshot>) -> ValueIterator<'a> {
+        ValueIterator { inner: Iterator::new(database, options, snapshot) }
     }
 
     /// return the last element of the iterator

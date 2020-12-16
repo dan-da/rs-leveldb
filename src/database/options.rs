@@ -3,7 +3,6 @@ use leveldb_sys::*;
 use libc::size_t;
 
 use super::cache::Cache;
-use super::snapshots::Snapshot;
 
 /// Options to consider when opening a new or pre-existing database.
 ///
@@ -100,9 +99,8 @@ impl WriteOptions {
 }
 
 /// The read options to use for any read operation.
-#[allow(missing_copy_implementations)]
 #[derive(Copy, Clone)]
-pub struct ReadOptions<'a>  {
+pub struct ReadOptions  {
     /// Whether to verify the saved checksums on read.
     ///
     /// default: false
@@ -112,25 +110,18 @@ pub struct ReadOptions<'a>  {
     ///
     /// default: true
     pub fill_cache: bool,
-    /// An optional snapshot to base this operation on.
-    ///
-    /// Consider using the `Snapshot` trait instead of setting
-    /// this yourself.
-    ///
-    /// default: None
-    pub snapshot: Option<&'a Snapshot<'a>>,
 }
 
-impl<'a> ReadOptions<'a> {
+impl ReadOptions {
     /// Return a `ReadOptions` struct with the default values.
-    pub fn new() -> ReadOptions<'a> {
+    pub fn new() -> ReadOptions {
         ReadOptions {
             verify_checksums: false,
             fill_cache: true,
-            snapshot: None,
         }
     }
 }
+
 
 #[allow(missing_docs)]
 pub unsafe fn c_options(options: &Options,
@@ -170,13 +161,10 @@ pub unsafe fn c_writeoptions(options: &WriteOptions) -> *mut leveldb_writeoption
 }
 
 #[allow(missing_docs)]
-pub unsafe fn c_readoptions<'a>(options: &ReadOptions<'a>) -> *mut leveldb_readoptions_t {
+pub unsafe fn c_readoptions(options: &ReadOptions) -> *mut leveldb_readoptions_t {
     let c_readoptions = leveldb_readoptions_create();
     leveldb_readoptions_set_verify_checksums(c_readoptions, options.verify_checksums as u8);
     leveldb_readoptions_set_fill_cache(c_readoptions, options.fill_cache as u8);
 
-    if let Some(ref snapshot) = options.snapshot {
-        leveldb_readoptions_set_snapshot(c_readoptions, snapshot.raw_ptr());
-    }
     c_readoptions
 }
