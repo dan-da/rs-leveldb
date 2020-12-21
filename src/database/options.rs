@@ -83,7 +83,7 @@ impl Options {
 }
 
 /// The write options to use for a write operation.
-#[derive(Copy,Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct WriteOptions {
     /// `fsync` before acknowledging a write operation.
     ///
@@ -99,7 +99,7 @@ impl WriteOptions {
 }
 
 /// The read options to use for any read operation.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct ReadOptions  {
     /// Whether to verify the saved checksums on read.
     ///
