@@ -49,7 +49,7 @@ pub struct Database {
 }
 
 unsafe impl Sync for Database {}
-//unsafe impl Send for Database {} // the Database is safe for Sync, but unsafe for Send
+unsafe impl Send for Database {}
 
 impl Database {
     fn new(database: *mut leveldb_t, comparator: Option<*mut leveldb_comparator_t>)

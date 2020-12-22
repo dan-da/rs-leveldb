@@ -20,7 +20,7 @@ If your project is using [Cargo](http://crates.io), drop the following lines in 
 ```text
 [dependencies]
 
-rs-leveldb = "0.1.4"
+rs-leveldb = "0.1.5"
 ```
 
 ## Development
