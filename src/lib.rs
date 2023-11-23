@@ -16,6 +16,9 @@ pub use database::comparator;
 pub use database::key;
 pub use database::util;
 
+// re-export any dep crates that are exposed in our public API
+pub use leveldb_sys;
+
 use leveldb_sys::{leveldb_major_version, leveldb_minor_version};
 
 
